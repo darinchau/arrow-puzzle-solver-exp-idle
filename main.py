@@ -7,8 +7,11 @@ import time
 from subprocess import call
 
 #Number of boards solved
-i = 3100
+i = 0
+
+#Whether to display debug messages and take screenshots after each solve for the time for you to post on reddit or something
 DEBUG_MESSAGES = False
+TAKE_SCREENSHOT = False
 
 # 1. Connect to device
 client = Client(host='127.0.0.1', port=5037)
@@ -20,9 +23,9 @@ if len(devices) == 0:
 device = devices[0]
 
 
-def take_screenshot(device):
+def take_screenshot(device, imagename):
     image = device.screencap()
-    with open('screen.png', 'wb') as f:
+    with open(imagename, 'wb') as f:
         f.write(image)
 
 
@@ -177,7 +180,7 @@ def testClicks():
 #### The main loop portion ####
 while True:
     # 2. Get image
-    take_screenshot(device)
+    take_screenshot(device, 'screen.png')
     image = Image.open('screen.png')
     Img = np.asarray(image)
 
@@ -195,11 +198,14 @@ while True:
     # 4. Solve board
     # while not checkWin():
     board = solve(board)
+    i += 1
+    if TAKE_SCREENSHOT:
+        take_screenshot(device, 'screen' + str(i) + '.png')
     
     # 5. Reset and error check
     sendClick((1120, 360))
     time.sleep(0.5)
     sendClick((69, 648))
-    i += 1
-    print("solved " + str(i) + " boards")
+    if DEBUG_MESSAGES:
+        print("solved " + str(i) + " boards")
     time.sleep(0.5)
