@@ -7,7 +7,7 @@ import time
 from subprocess import call
 
 #Number of boards solved
-i = 0
+i = 3100
 DEBUG_MESSAGES = False
 
 # 1. Connect to device
@@ -153,6 +153,14 @@ def solve(board):
     board = propogate(board)
     return board
 
+# def checkWin():
+#     take_screenshot(device)
+#     image = Image.open('screen.png')
+#     Img = np.asarray(image)
+#     if DEBUG_MESSAGES:
+#         print(Img[395][400])
+#     return Img[395][400][1] < 254
+
 
 def testClicks():
     for x in range(-3, 4):
@@ -184,7 +192,11 @@ while True:
             arr.append(getState(getImgCoord((x, y))))
         board.append(arr)
 
+    # 4. Solve board
+    # while not checkWin():
     board = solve(board)
+    
+    # 5. Reset and error check
     sendClick((1120, 360))
     time.sleep(0.5)
     sendClick((69, 648))
