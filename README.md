@@ -17,4 +17,4 @@ MEmu: the emulator of choice
 
 4. Set the arrow puzzle settings to greyscale and displaying numbers
 
-5. Run the script. If everything goes well it should solve one board in an average of 12 seconds.
+5. Run the script. If everything goes well it should solve one board in an average of 6 seconds.

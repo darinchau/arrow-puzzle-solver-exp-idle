@@ -6,7 +6,9 @@ import numpy as np
 import time
 from subprocess import call
 
-i = 2865
+#Number of boards solved
+i = 0
+DEBUG_MESSAGES = False
 
 # 1. Connect to device
 client = Client(host='127.0.0.1', port=5037)
@@ -25,7 +27,8 @@ def take_screenshot(device):
 
 
 def sendClick(imgCoords: tuple):
-    # print(f"Clicking {imgCoords}")
+    if DEBUG_MESSAGES:
+        print(f"Clicking {imgCoords}")
     call(["adb", "shell", "input", "tap", str(imgCoords[1]), str(imgCoords[0])])
 
 
@@ -64,7 +67,7 @@ def setStateOnBoard(board, localCoords: tuple):
     return board
 
 
-def MakeMoveOn(board, localCoords: tuple):
+def MakeMoveOn(board, localCoords: tuple, click = True):
     # Handle the board, for itself and its 6 neighbours
     for i in [localCoords, (localCoords[0], localCoords[1] + 2), (localCoords[0], localCoords[1] - 2), (localCoords[0] + 1, localCoords[1] + 1), (localCoords[0] + 1, localCoords[1] - 1), (localCoords[0] - 1, localCoords[1] + 1), (localCoords[0] - 1, localCoords[1] - 1)]:
         if isValid(i):
@@ -73,22 +76,32 @@ def MakeMoveOn(board, localCoords: tuple):
     # print(f"Making move on {localCoords}")
 
     # Handle the device
-    sendClick(getImgCoord(localCoords))
+    if click:
+        sendClick(getImgCoord(localCoords))
     return board
 
 # Solve a cell by clicking the one below it
 
-
-def solveBottom(board, localCoords: tuple):
+def solveBottom(board, localCoords: tuple, click = True):
     south = (localCoords[0], localCoords[1] - 2)
     # Check if there is a bottom cell
     if isValid(south):
         if getStateFromBoard(board, localCoords) == 2:
-            board = MakeMoveOn(board, south)
+            board = MakeMoveOn(board, south, click)
     return board
 
+def copyBoard(board):
+    copy = []
+    for i in range(len(board)):
+        arr = []
+        for j in range(len(board[0])):
+            arr.append(board[i][j])
+        copy.append(arr)
+    return copy
 
-def propogate(board):
+
+
+def propogate(board, click = True):
     # Doing things the hard way :D
     solveSequence = [(0, 6), (-1, 5), (-2, 4), (-3, 3), (1, 5), (2, 4), (3, 3),
                      (0, 4), (-1, 3), (-2, 2), (-3, 1), (1, 3), (2, 2), (3, 1),
@@ -97,16 +110,19 @@ def propogate(board):
                      (0, -2), (-1, -3), (1, -3), (-0, -4)]
 
     for i in range(len(solveSequence)):
-        board = solveBottom(board, solveSequence[i])
+        board = solveBottom(board, solveSequence[i], click)
 
     return board
 
 
 def solve(board):
-    board = propogate(board)
+    copy = copyBoard(board)
+    copy = propogate(copy, False)
+    # print(board[0])
+    # print(copy[0])
     solver = (0, 0, 0, 0)
-    parity = (getStateFromBoard(board, (-3, -3)), getStateFromBoard(board, (-2, -4)),
-              getStateFromBoard(board, (-1, -5)), getStateFromBoard(board, (0, -6)))
+    parity = (getStateFromBoard(copy, (-3, -3)), getStateFromBoard(copy, (-2, -4)),
+              getStateFromBoard(copy, (-1, -5)), getStateFromBoard(copy, (0, -6)))
     if parity == (1, 1, 2, 1):
         solver = (0, 1, 0, 0)
     elif parity == (1, 2, 1, 2):
@@ -121,6 +137,9 @@ def solve(board):
         solver = (0, 0, 1, 1)
     elif parity == (2, 2, 2, 1):
         solver = (1, 0, 1, 0)
+
+    if DEBUG_MESSAGES:
+        print(parity)
 
     if solver[0]:
         board = MakeMoveOn(board, (-3, 3))
@@ -143,10 +162,11 @@ def testClicks():
                 imgCoord = getImgCoord((x, y))
                 sendClick(imgCoord)
                 Img[imgCoord[0]][imgCoord[1]] = [255, 0, 0, 255]
-
     image = Image.fromarray(Img)
     image = image.save("screen.png")
 
+
+#### The main loop portion ####
 while True:
     # 2. Get image
     take_screenshot(device)
