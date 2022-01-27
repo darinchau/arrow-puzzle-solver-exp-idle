@@ -6,12 +6,8 @@ import numpy as np
 import time
 from subprocess import call
 
-#Number of boards solved
-i = 0
-
-#Whether to display debug messages and take screenshots after each solve for the time for you to post on reddit or something
-DEBUG_MESSAGES = False
-TAKE_SCREENSHOT = False
+# Number of boards solved. Already did 17233 without records
+i = 40367
 
 # 1. Connect to device
 client = Client(host='127.0.0.1', port=5037)
@@ -30,8 +26,6 @@ def take_screenshot(device, imagename):
 
 
 def sendClick(imgCoords: tuple):
-    if DEBUG_MESSAGES:
-        print(f"Clicking {imgCoords}")
     call(["adb", "shell", "input", "tap", str(imgCoords[1]), str(imgCoords[0])])
 
 
@@ -70,28 +64,24 @@ def setStateOnBoard(board, localCoords: tuple):
     return board
 
 
-def MakeMoveOn(board, localCoords: tuple, click = True):
+def MakeMoveOn(board, localCoords: tuple, click=True):
     # Handle the board, for itself and its 6 neighbours
     for i in [localCoords, (localCoords[0], localCoords[1] + 2), (localCoords[0], localCoords[1] - 2), (localCoords[0] + 1, localCoords[1] + 1), (localCoords[0] + 1, localCoords[1] - 1), (localCoords[0] - 1, localCoords[1] + 1), (localCoords[0] - 1, localCoords[1] - 1)]:
         if isValid(i):
             board = setStateOnBoard(board, i)
-
-    # print(f"Making move on {localCoords}")
-
-    # Handle the device
     if click:
         sendClick(getImgCoord(localCoords))
     return board
 
-# Solve a cell by clicking the one below it
 
-def solveBottom(board, localCoords: tuple, click = True):
+def solveBottom(board, localCoords: tuple, click=True):
     south = (localCoords[0], localCoords[1] - 2)
     # Check if there is a bottom cell
     if isValid(south):
         if getStateFromBoard(board, localCoords) == 2:
             board = MakeMoveOn(board, south, click)
     return board
+
 
 def copyBoard(board):
     copy = []
@@ -103,8 +93,7 @@ def copyBoard(board):
     return copy
 
 
-
-def propogate(board, click = True):
+def propogate(board, click=True):
     # Doing things the hard way :D
     solveSequence = [(0, 6), (-1, 5), (-2, 4), (-3, 3), (1, 5), (2, 4), (3, 3),
                      (0, 4), (-1, 3), (-2, 2), (-3, 1), (1, 3), (2, 2), (3, 1),
@@ -141,9 +130,6 @@ def solve(board):
     elif parity == (2, 2, 2, 1):
         solver = (1, 0, 1, 0)
 
-    if DEBUG_MESSAGES:
-        print(parity)
-
     if solver[0]:
         board = MakeMoveOn(board, (-3, 3))
     if solver[1]:
@@ -156,26 +142,6 @@ def solve(board):
     board = propogate(board)
     return board
 
-# def checkWin():
-#     take_screenshot(device)
-#     image = Image.open('screen.png')
-#     Img = np.asarray(image)
-#     if DEBUG_MESSAGES:
-#         print(Img[395][400])
-#     return Img[395][400][1] < 254
-
-
-def testClicks():
-    for x in range(-3, 4):
-        for y in range(-6, 7):
-            if isValid((x, y)):
-                print(f"Clicking {(x,y)}")
-                imgCoord = getImgCoord((x, y))
-                sendClick(imgCoord)
-                Img[imgCoord[0]][imgCoord[1]] = [255, 0, 0, 255]
-    image = Image.fromarray(Img)
-    image = image.save("screen.png")
-
 
 #### The main loop portion ####
 while True:
@@ -183,9 +149,7 @@ while True:
     take_screenshot(device, 'screen.png')
     image = Image.open('screen.png')
     Img = np.asarray(image)
-
     resolution = (len(Img), len(Img[0]))
-    # print(resolution)
 
     # 3. Get board state and store it into an array
     board = []
@@ -196,16 +160,12 @@ while True:
         board.append(arr)
 
     # 4. Solve board
-    # while not checkWin():
     board = solve(board)
     i += 1
-    if TAKE_SCREENSHOT:
-        take_screenshot(device, 'screen' + str(i) + '.png')
-    
+
     # 5. Reset and error check
     sendClick((1120, 360))
     time.sleep(0.5)
     sendClick((69, 648))
-    if DEBUG_MESSAGES:
-        print("solved " + str(i) + " boards")
+    print("solved " + str(i) + " boards")
     time.sleep(0.5)
