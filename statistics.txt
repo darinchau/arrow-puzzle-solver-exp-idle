@@ -1,2 +1,2 @@
-Number of times solved: 8 
-Average time: 3.523
+Number of times solved: 0
+Average time: 0.000

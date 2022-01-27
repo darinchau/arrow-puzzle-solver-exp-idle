@@ -1,7 +1,6 @@
 # pip install -U pure-python-adb
 # pip install pillow
 # pip install pyautogui
-from distutils.log import error
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
@@ -27,16 +26,14 @@ if len(devices) == 0:
 
 device = devices[0]
 
-# if using pyautogui wait for 3 seconds before starting
-if not USE_ADB:
-    time.sleep(2)
-
+# if using pyautogui wait for 2 seconds before starting
 fo = open("statistics.txt", "rb+")
 fo.seek(24, 0)
 str = fo.read(10).split(b"\n")
 numSolved = int(str[0])
 fo.seek(-5, 2)
 avgTime = float(fo.read(5))
+time.sleep(2)
 
 def take_screenshot(device, imagename):
     image = device.screencap()
@@ -47,7 +44,7 @@ def take_screenshot(device, imagename):
 def sendClick(localCoord: tuple):
     if USE_ADB:
         imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
-        call(["adb", "shell", "input", "tap", str(imgCoords[0]), str(imgCoords[1])])
+        call(["adb", "shell", "input", "tap", f"{imgCoords[0]}", f"{imgCoords[1]}"])
     else:
         imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060)
         pyautogui.leftClick(imgCoords[0], imgCoords[1])
@@ -194,6 +191,7 @@ while True:
     # 5. Reset and error check
     if Take_Screenshot_after_each_solve:
         take_screenshot(device, 'screen' + str(numSolved) + '.png')
+        
     sendClick((0,-8))
     sendClick((-4,0))
-    print(f"solved {numSolved} boards")
+    print(write)

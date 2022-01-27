@@ -17,4 +17,6 @@ MEmu: the emulator of choice
 
 4. Set the arrow puzzle settings to greyscale and displaying numbers
 
-5. Run the script. If everything goes well it should solve one board in an average of 6-8 seconds.
+5. Run the script. If everything goes well it should solve on it's own.
+
+Please don't touch USE_ADB. It is a setting that allows me to send clicks directly via mouse, which is about 3 seconds faster on every solve, but the settings are kinda personalized to my own computer. If you want to try setting USE_ADB to false, set your screen resolution to 2736 x 1824, and then maximize the emulator window such that the game window is exactly at the middle of the screen. Then let it run overnight.
