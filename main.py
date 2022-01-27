@@ -1,13 +1,22 @@
 # pip install -U pure-python-adb
 # pip install pillow
+# pip install pyautogui
+from distutils.log import error
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
 import time
 from subprocess import call
+import pyautogui
+from datetime import datetime
 
-# Number of boards solved. Already did 17233 without records
-i = 40367
+# Whether you want to send clicks using ADB or pyautogui
+USE_ADB = True
+Take_Screenshot_after_each_solve = False
+
+# The coordinates of the claim button. Figure that one yourself using ms paint
+# If you couldn't be bothered to do so just leave it intact, set screen resolution to 
+# 2736 x 1824 and emulator resolution to 1200 x 800, it should (hopefully) work
 
 # 1. Connect to device
 client = Client(host='127.0.0.1', port=5037)
@@ -18,6 +27,16 @@ if len(devices) == 0:
 
 device = devices[0]
 
+# if using pyautogui wait for 3 seconds before starting
+if not USE_ADB:
+    time.sleep(2)
+
+fo = open("statistics.txt", "rb+")
+fo.seek(24, 0)
+str = fo.read(10).split(b"\n")
+numSolved = int(str[0])
+fo.seek(-5, 2)
+avgTime = float(fo.read(5))
 
 def take_screenshot(device, imagename):
     image = device.screencap()
@@ -25,15 +44,20 @@ def take_screenshot(device, imagename):
         f.write(image)
 
 
-def sendClick(imgCoords: tuple):
-    call(["adb", "shell", "input", "tap", str(imgCoords[1]), str(imgCoords[0])])
+def sendClick(localCoord: tuple):
+    if USE_ADB:
+        imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
+        call(["adb", "shell", "input", "tap", str(imgCoords[0]), str(imgCoords[1])])
+    else:
+        imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060)
+        pyautogui.leftClick(imgCoords[0], imgCoords[1])
 
 
 def getState(imgCoord: tuple):
     if (imgCoord[0] < 0):
         return 0
 
-    pixel = Img[imgCoord[0]][imgCoord[1]]
+    pixel = Img[imgCoord[1]][imgCoord[0]]
     # assert pixel[0] == 17 or pixel[0] == 85
     if pixel[0] < 20:
         return 1
@@ -43,7 +67,7 @@ def getState(imgCoord: tuple):
 def getImgCoord(localCoord: tuple):
     if not isValid(localCoord):
         return (-1, -1)
-    return (-50 * localCoord[1] + 720, 85 * localCoord[0] + 400)
+    return (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
 
 
 def isValid(localCoord: tuple):
@@ -70,7 +94,7 @@ def MakeMoveOn(board, localCoords: tuple, click=True):
         if isValid(i):
             board = setStateOnBoard(board, i)
     if click:
-        sendClick(getImgCoord(localCoords))
+        sendClick(localCoords)
     return board
 
 
@@ -110,8 +134,6 @@ def propogate(board, click=True):
 def solve(board):
     copy = copyBoard(board)
     copy = propogate(copy, False)
-    # print(board[0])
-    # print(copy[0])
     solver = (0, 0, 0, 0)
     parity = (getStateFromBoard(copy, (-3, -3)), getStateFromBoard(copy, (-2, -4)),
               getStateFromBoard(copy, (-1, -5)), getStateFromBoard(copy, (0, -6)))
@@ -159,13 +181,19 @@ while True:
             arr.append(getState(getImgCoord((x, y))))
         board.append(arr)
 
-    # 4. Solve board
+    # 4. Solve board and do bookkeeping
+    t1 = datetime.now()
     board = solve(board)
-    i += 1
+    t2 = datetime.now()
+    numSolved += 1
+    avgTime = round((avgTime * (numSolved-1) + (t2 - t1).total_seconds()) / numSolved, 3)
+    write = f"Number of times solved: {numSolved} \nAverage time: {avgTime}"
+    fo.seek(0,0)
+    fo.write(bytes(write, 'utf-8'))
 
     # 5. Reset and error check
-    sendClick((1120, 360))
-    time.sleep(0.5)
-    sendClick((69, 648))
-    print("solved " + str(i) + " boards")
-    time.sleep(0.5)
+    if Take_Screenshot_after_each_solve:
+        take_screenshot(device, 'screen' + str(numSolved) + '.png')
+    sendClick((0,-8))
+    sendClick((-4,0))
+    print(f"solved {numSolved} boards")

@@ -1,0 +1,2 @@
+Number of times solved: 8 
+Average time: 3.523
