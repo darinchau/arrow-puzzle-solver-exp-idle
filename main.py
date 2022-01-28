@@ -14,7 +14,7 @@ USE_ADB = True
 Take_Screenshot_after_each_solve = False
 
 # The coordinates of the claim button. Figure that one yourself using ms paint
-# If you couldn't be bothered to do so just leave it intact, set screen resolution to 
+# If you couldn't be bothered to do so just leave it intact, set screen resolution to
 # 2736 x 1824 and emulator resolution to 1200 x 800, it should (hopefully) work
 
 # 1. Connect to device
@@ -35,6 +35,7 @@ fo.seek(-5, 2)
 avgTime = float(fo.read(5))
 time.sleep(2)
 
+
 def take_screenshot(device, imagename):
     image = device.screencap()
     with open(imagename, 'wb') as f:
@@ -44,7 +45,8 @@ def take_screenshot(device, imagename):
 def sendClick(localCoord: tuple):
     if USE_ADB:
         imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
-        call(["adb", "shell", "input", "tap", f"{imgCoords[0]}", f"{imgCoords[1]}"])
+        call(["adb", "shell", "input", "tap",
+             f"{imgCoords[0]}", f"{imgCoords[1]}"])
     else:
         imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060)
         pyautogui.leftClick(imgCoords[0], imgCoords[1])
@@ -183,15 +185,17 @@ while True:
     board = solve(board)
     t2 = datetime.now()
     numSolved += 1
-    avgTime = round((avgTime * (numSolved-1) + (t2 - t1).total_seconds()) / numSolved, 3)
+    avgTime = round((avgTime * (numSolved-1) +
+                    (t2 - t1).total_seconds()) / numSolved, 3)
     write = f"Number of times solved: {numSolved} \nAverage time: {avgTime}"
-    fo.seek(0,0)
+    fo.seek(0, 0)
     fo.write(bytes(write, 'utf-8'))
 
     # 5. Reset and error check
     if Take_Screenshot_after_each_solve:
         take_screenshot(device, 'screen' + str(numSolved) + '.png')
-        
-    sendClick((0,-8))
-    sendClick((-4,0))
-    print(write)
+
+    sendClick((0, -8))
+    sendClick((-4, 0))
+    print(write + f"\nSolve time: {round((t2 - t1).total_seconds(),3)}")
+    time.sleep(0.5)

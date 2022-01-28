@@ -13,10 +13,21 @@ MEmu: the emulator of choice
 
 2. Connect your emulator to the adb server by running "adb connect 127.0.0.1:21503" on your server
 
-3. Set your emulator resolution to 1200 x 800
+3. Set your emulator resolution to 1200 x 800 and CPU settings to the highest as long as it doesn't interfere your daily work
 
 4. Set the arrow puzzle settings to greyscale and displaying numbers
 
 5. Run the script. If everything goes well it should solve on it's own.
 
-Please don't touch USE_ADB. It is a setting that allows me to send clicks directly via mouse, which is about 3 seconds faster on every solve, but the settings are kinda personalized to my own computer. If you want to try setting USE_ADB to false, set your screen resolution to 2736 x 1824, and then maximize the emulator window such that the game window is exactly at the middle of the screen. Then let it run overnight.
+If you want to try setting USE_ADB to false, set your screen resolution to 2736 x 1824, and then maximize the emulator window such that the game window is exactly at the middle of the screen. Then let it run overnight.
+
+
+#Statistics
+
+Send clicks via adb: 
+Number of times solved: 3584 
+Average time: 6.718
+
+Send clicks via mouse:
+Number of times solved: 8249 
+Average time: 3.299
