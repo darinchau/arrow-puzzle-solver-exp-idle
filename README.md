@@ -25,9 +25,7 @@ If you want to try setting USE_ADB to false, set your screen resolution to 2736 
 #Statistics
 
 Send clicks via adb: 
-Number of times solved: 3584 
 Average time: 6.718
 
 Send clicks via mouse:
-Number of times solved: 8249 
 Average time: 3.299

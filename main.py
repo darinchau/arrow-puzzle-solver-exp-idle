@@ -11,7 +11,6 @@ from datetime import datetime
 
 # Whether you want to send clicks using ADB or pyautogui
 USE_ADB = True
-Take_Screenshot_after_each_solve = False
 
 # The coordinates of the claim button. Figure that one yourself using ms paint
 # If you couldn't be bothered to do so just leave it intact, set screen resolution to
@@ -25,14 +24,6 @@ if len(devices) == 0:
     raise RuntimeError("No devices connected")
 
 device = devices[0]
-
-# if using pyautogui wait for 2 seconds before starting
-fo = open("statistics.txt", "rb+")
-fo.seek(24, 0)
-str = fo.read(10).split(b"\n")
-numSolved = int(str[0])
-fo.seek(-5, 2)
-avgTime = float(fo.read(5))
 time.sleep(2)
 
 
@@ -184,18 +175,9 @@ while True:
     t1 = datetime.now()
     board = solve(board)
     t2 = datetime.now()
-    numSolved += 1
-    avgTime = round((avgTime * (numSolved-1) +
-                    (t2 - t1).total_seconds()) / numSolved, 3)
-    write = f"Number of times solved: {numSolved} \nAverage time: {avgTime}"
-    fo.seek(0, 0)
-    fo.write(bytes(write, 'utf-8'))
 
     # 5. Reset and error check
-    if Take_Screenshot_after_each_solve:
-        take_screenshot(device, 'screen' + str(numSolved) + '.png')
-
     sendClick((0, -8))
     sendClick((-4, 0))
-    print(write + f"\nSolve time: {round((t2 - t1).total_seconds(),3)}")
+    print(f"Solve time: {round((t2 - t1).total_seconds(),3)}")
     time.sleep(0.5)
