@@ -1,3 +1,10 @@
+# Whether you want to send clicks using ADB or pyautogui
+USE_ADB = True
+
+# Create a json file with the name stats.json, or use mine
+Save_Statistics = True
+
+
 # pip install -U pure-python-adb
 # pip install pillow
 # pip install pyautogui
@@ -8,6 +15,8 @@ import time
 from subprocess import call
 import pyautogui
 from datetime import datetime
+import statistics
+import json
 
 # Whether you want to send clicks using ADB or pyautogui
 USE_ADB = True
@@ -25,6 +34,10 @@ if len(devices) == 0:
 
 device = devices[0]
 time.sleep(2)
+t = []
+if Save_Statistics:
+    f = open("stats.json")
+    stats = json.load(f)
 
 
 def take_screenshot(device, imagename):
@@ -154,6 +167,26 @@ def solve(board):
     board = propogate(board)
     return board
 
+def getStats(t):
+    nrsolve = len(t)
+    avg = sum(t)/nrsolve
+    stdev = statistics.stdev(t) if nrsolve > 2 else 0
+    minimum = min(t)
+    if Save_Statistics:
+        newRuns = stats["Runs"] + nrsolve
+        newAverage = (stats["Runs"] * stats["Average"] + sum(t))/(stats["Runs"] + nrsolve)
+        newStats = {
+            "Runs": int(newRuns),
+            "Average": newAverage,
+            "Stdev": ((stats["Runs"] * (stats["Stdev"] ** 2 + (stats["Stdev"] - newAverage) ** 2) + nrsolve * (stdev ** 2 + (stats["Stdev"] - stdev) ** 2))/newRuns) ** 0.5,
+            "Fastest": min([minimum, stats["Fastest"]])
+        }
+        with open('stats.json', 'w') as json_file:
+            json.dump(newStats, json_file)
+    else:
+        time.sleep(0.2)
+    return nrsolve, avg, stdev, minimum
+
 
 #### The main loop portion ####
 while True:
@@ -178,6 +211,14 @@ while True:
 
     # 5. Reset and error check
     sendClick((0, -8))
+    
+    # Replacing the sleep with something meaningful
+    s = (t2 - t1).total_seconds()
+    solveTime = round(s,3)
+    t.append(s)
+    nrSolve, avg, std, m = getStats(t)
+
     sendClick((-4, 0))
-    print(f"Solve time: {round((t2 - t1).total_seconds(),3)}")
+    
+    print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
     time.sleep(0.5)
