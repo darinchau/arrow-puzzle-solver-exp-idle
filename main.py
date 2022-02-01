@@ -1,10 +1,3 @@
-# Whether you want to send clicks using ADB or pyautogui
-USE_ADB = True
-
-# Create a json file with the name stats.json, or use mine
-Save_Statistics = True
-
-
 # pip install -U pure-python-adb
 # pip install pillow
 # pip install pyautogui
@@ -13,17 +6,8 @@ from PIL import Image
 import numpy as np
 import time
 from subprocess import call
-import pyautogui
 from datetime import datetime
 import statistics
-import json
-
-# Whether you want to send clicks using ADB or pyautogui
-USE_ADB = True
-
-# The coordinates of the claim button. Figure that one yourself using ms paint
-# If you couldn't be bothered to do so just leave it intact, set screen resolution to
-# 2736 x 1824 and emulator resolution to 1200 x 800, it should (hopefully) work
 
 # 1. Connect to device
 client = Client(host='127.0.0.1', port=5037)
@@ -35,9 +19,6 @@ if len(devices) == 0:
 device = devices[0]
 time.sleep(2)
 t = []
-if Save_Statistics:
-    f = open("stats.json")
-    stats = json.load(f)
 
 
 def take_screenshot(device, imagename):
@@ -47,7 +28,7 @@ def take_screenshot(device, imagename):
 
 
 def sendClick(localCoord: tuple):
-    if USE_ADB:
+    if True:
         imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
         call(["adb", "shell", "input", "tap",
              f"{imgCoords[0]}", f"{imgCoords[1]}"])
@@ -172,19 +153,6 @@ def getStats(t):
     avg = sum(t)/nrsolve
     stdev = statistics.stdev(t) if nrsolve > 2 else 0
     minimum = min(t)
-    if Save_Statistics:
-        newRuns = stats["Runs"] + nrsolve
-        newAverage = (stats["Runs"] * stats["Average"] + sum(t))/(stats["Runs"] + nrsolve)
-        newStats = {
-            "Runs": int(newRuns),
-            "Average": newAverage,
-            "Stdev": ((stats["Runs"] * (stats["Stdev"] ** 2 + (stats["Stdev"] - newAverage) ** 2) + nrsolve * (stdev ** 2 + (stats["Stdev"] - stdev) ** 2))/newRuns) ** 0.5,
-            "Fastest": min([minimum, stats["Fastest"]])
-        }
-        with open('stats.json', 'w') as json_file:
-            json.dump(newStats, json_file)
-    else:
-        time.sleep(0.2)
     return nrsolve, avg, stdev, minimum
 
 
@@ -216,6 +184,7 @@ while True:
     s = (t2 - t1).total_seconds()
     solveTime = round(s,3)
     t.append(s)
+    time.sleep(0.3)
     nrSolve, avg, std, m = getStats(t)
 
     sendClick((-4, 0))
