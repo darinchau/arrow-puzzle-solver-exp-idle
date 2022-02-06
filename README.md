@@ -19,6 +19,7 @@ MEmu: the emulator of choice
 
 5. Run the script. If everything goes well it should solve on it's own.
 
-If you want to try setting USE_ADB to false, set your screen resolution to 2736 x 1824, and then maximize the emulator window such that the game window is exactly at the middle of the screen. Then let it run overnight.
 
 Update: I decided to remove everything except the basic functionalities so that the user could get an experience as smooth as possible
+
+Statistics: (10000 solves) Average = 5.543 real time seconds, Standard deviation = 1.092, Fastest time = 1.588

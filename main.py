@@ -158,36 +158,62 @@ def getStats(t):
 
 #### The main loop portion ####
 while True:
-    # 2. Get image
-    take_screenshot(device, 'screen.png')
-    image = Image.open('screen.png')
-    Img = np.asarray(image)
-    resolution = (len(Img), len(Img[0]))
+    try:
+        # 2. Get image
+        take_screenshot(device, 'screen.png')
+        image = Image.open('screen.png')
+        Img = np.asarray(image)
+        resolution = (len(Img), len(Img[0]))
 
-    # 3. Get board state and store it into an array
-    board = []
-    for x in range(-3, 4):
-        arr = []
-        for y in range(-6, 7):
-            arr.append(getState(getImgCoord((x, y))))
-        board.append(arr)
+        # 3. Get board state and store it into an array
+        board = []
+        for x in range(-3, 4):
+            arr = []
+            for y in range(-6, 7):
+                arr.append(getState(getImgCoord((x, y))))
+            board.append(arr)
 
-    # 4. Solve board and do bookkeeping
-    t1 = datetime.now()
-    board = solve(board)
-    t2 = datetime.now()
+        # 4. Solve board and do bookkeeping
+        t1 = datetime.now()
+        board = solve(board)
+        t2 = datetime.now()
 
-    # 5. Reset and error check
-    sendClick((0, -8))
-    
-    # Replacing the sleep with something meaningful
-    s = (t2 - t1).total_seconds()
-    solveTime = round(s,3)
-    t.append(s)
-    time.sleep(0.3)
-    nrSolve, avg, std, m = getStats(t)
+        # 5. Reset and error check
+        sendClick((0, -8))
+        
+        # Replacing the sleep with something meaningful
+        s = (t2 - t1).total_seconds()
+        solveTime = round(s,3)
+        t.append(s)
+        nrSolve, avg, std, m = getStats(t)
 
-    sendClick((-4, 0))
-    
-    print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
-    time.sleep(0.5)
+        time.sleep(0.3)
+        sendClick((-4, 0))
+        print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
+        time.sleep(0.5)
+
+    except IndexError:
+        raise IndexError("Game has stopped")
+        take_screenshot(device, 'screen.png')
+        image = Image.open('screen.png')
+        Img = np.asarray(image)
+        resolution = (len(Img), len(Img[0]))
+        assert resolution == (800, 1200)
+        print("Handling game forcestopping")
+        time.sleep(5)
+        #Game Icon
+        sendClick((0, 8))
+        time.sleep(5)
+        sendClick((0, -8.5))
+        while True:
+            print("While")
+            take_screenshot(device, 'screen.png')
+            image = Image.open('screen.png')
+            Img = np.asarray(image)
+            if Img[1037][420][1] > 130:
+                break
+            time.sleep(2)
+        sendClick((0, -3))
+        time.sleep(3)
+        sendClick((0, 0))
+        time.sleep(3)
