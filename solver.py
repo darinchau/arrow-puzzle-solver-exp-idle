@@ -11,6 +11,7 @@ from datetime import datetime
 import statistics
 import PySimpleGUI as sg
 
+t = []
 
 def initialize():
     # 1. Connect to device
@@ -20,9 +21,8 @@ def initialize():
     if len(devices) == 0:
         raise RuntimeError("No devices connected")
 
-    device = devices[0]
     time.sleep(2)
-    return device
+    return devices[0]
 
 
 def take_screenshot(device, imagename):
@@ -30,12 +30,17 @@ def take_screenshot(device, imagename):
     with open(imagename, 'wb') as f:
         f.write(image)
 
+# Sends click via adb to the phone
+def clickOn(x, y, wait = False):
+    call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
+    if wait:
+        time.sleep(0.5)
 
+#Wrapper for the click method
 def sendClick(localCoord: tuple):
     if True:
         imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
-        call(["adb", "shell", "input", "tap",
-             f"{imgCoords[0]}", f"{imgCoords[1]}"])
+        clickOn(imgCoords[0], imgCoords[1])
     else:
         imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060)
         pyautogui.leftClick(imgCoords[0], imgCoords[1])
@@ -161,7 +166,7 @@ def getStats(t):
     return nrsolve, avg, stdev, minimum
 
 
-def solveBoard(device, t):
+def solveBoard(device):
     # 2. Get image
     take_screenshot(device, 'screen.png')
     image = Image.open('screen.png')
@@ -194,8 +199,5 @@ def solveBoard(device, t):
 
     time.sleep(0.3)
     sendClick((-4, 0))
-    print(
-        f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
+    # print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
     time.sleep(0.5)
-
-    return t
