@@ -2,9 +2,8 @@ from solver import *
 from subprocess import call
 import threading as thread
 
-global device
-
 _callbacks = {}
+cap = 3800
 
 class Event():
     @staticmethod
@@ -33,11 +32,12 @@ def init():
     return initialize()
 
 def emittingDone(device):
-    print("Done!")
+    # print("Done!")
+    pass
 
 # Solves sthe board (recursively)
 def solveThis(device):
-    print("Is solving")
+    # print("Is solving")
     solveBoard(device)
 
 #######################################################################################################
@@ -79,18 +79,24 @@ def PressAccelerator(device):
     time.sleep(1)
 
 def ehehe():
+    i = cap - 30
     while True:
-        time.sleep(30)
-        Event.off('done', solveThis)
-        Event.on('done', PressAccelerator)
-        print("Pressing accelerator")
-        time.sleep(3600)
+        if i > cap:
+            Event.off('done', solveThis)
+            Event.on('done', PressAccelerator)
+            print("Pressing accelerator")
+            i = 0
+        time.sleep(1)
+        i += 1
         if stop_threads:
             break
 
 def ahaha(device):
     while True:
-        Event.emit('done', device)
+        try:
+            Event.emit('done', device)
+        except IndexError:
+            stop_threads = True
         if stop_threads:
             break
 

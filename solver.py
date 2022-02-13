@@ -34,7 +34,7 @@ def take_screenshot(device, imagename):
 def clickOn(x, y, wait = False):
     call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
     if wait:
-        time.sleep(0.5)
+        time.sleep(3)
 
 #Wrapper for the click method
 def sendClick(localCoord: tuple):
@@ -199,5 +199,5 @@ def solveBoard(device):
 
     time.sleep(0.3)
     sendClick((-4, 0))
-    # print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
+    print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
     time.sleep(0.5)
