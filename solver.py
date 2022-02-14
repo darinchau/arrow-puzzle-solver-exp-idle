@@ -5,7 +5,6 @@ from ppadb.client import Client
 from PIL import Image
 import numpy as np
 import time
-import pyautogui
 from subprocess import call
 from datetime import datetime
 import statistics
@@ -38,13 +37,8 @@ def clickOn(x, y, wait = False):
 
 #Wrapper for the click method
 def sendClick(localCoord: tuple):
-    if True:
-        imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
-        clickOn(imgCoords[0], imgCoords[1])
-    else:
-        imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060)
-        pyautogui.leftClick(imgCoords[0], imgCoords[1])
-
+    imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
+    clickOn(imgCoords[0], imgCoords[1])
 
 def getState(Img, imgCoord: tuple):
     if (imgCoord[0] < 0):
@@ -160,9 +154,10 @@ def solve(board, moves: list):
 
 def getStats(t):
     nrsolve = len(t)
-    avg = sum(t)/nrsolve
+    avg = round(sum(t)/nrsolve, 3)
     stdev = statistics.stdev(t) if nrsolve > 2 else 0
-    minimum = min(t)
+    stdev = round(stdev, 3)
+    minimum = round(min(t), 3)
     return nrsolve, avg, stdev, minimum
 
 

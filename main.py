@@ -79,19 +79,24 @@ def PressAccelerator(device):
     time.sleep(1)
 
 def ehehe():
-    i = cap - 30
+    i = 10
+    global stop_threads
     while True:
-        if i > cap:
+        if i < 0:
             Event.off('done', solveThis)
             Event.on('done', PressAccelerator)
             print("Pressing accelerator")
-            i = 0
-        time.sleep(1)
-        i += 1
+            i = cap
+        else:
+            time.sleep(1)
+            i -= 1
+            if i % 60 == 0:
+                print(f"There is {int(i/60)} minutes until we press the button again")
         if stop_threads:
             break
 
 def ahaha(device):
+    global stop_threads
     while True:
         try:
             Event.emit('done', device)
@@ -120,6 +125,4 @@ if __name__ == '__main__':
             Event.off('done', solveThis)
             Event.off('done', emittingDone)
             stop_threads = True
-            # assert not t1.is_alive()
-            # assert not t2.is_alive()
             break
