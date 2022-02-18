@@ -3,7 +3,7 @@ from subprocess import call
 import threading as thread
 
 _callbacks = {}
-cap = 3800
+cap = 650
 
 class Event():
     @staticmethod
@@ -26,7 +26,7 @@ class Event():
 ################################################################################################################
 
 def init():
-    print("initializing")
+    print("Initializing")
     Event.on('done', solveThis)
     Event.on('done', emittingDone)
     return initialize()
@@ -90,8 +90,6 @@ def ehehe():
         else:
             time.sleep(1)
             i -= 1
-            if i % 60 == 0:
-                print(f"There is {int(i/60)} minutes until we press the button again")
         if stop_threads:
             break
 
@@ -102,27 +100,23 @@ def ahaha(device):
             Event.emit('done', device)
         except IndexError:
             stop_threads = True
+            print("Hey the emulator is dead")            
         if stop_threads:
             break
+
 
 #Main function
 if __name__ == '__main__':
     device = init()
-    layout = [[sg.Text('Solving the arrow puzzle...')]]
-    window = sg.Window('Arrow puzzle solver', layout)
     
     t1 = thread.Thread(target = ehehe)
     t1.start()
 
-    newtuple = (device, )
-    t2 = thread.Thread(target = ahaha, args = newtuple)
+    t2 = thread.Thread(target = ahaha, args = (device, ))
     t2.start()
 
-    while True:
-        event, values = window.read()
-        if event == sg.WIN_CLOSED:
-            # Event.off('done', PressAccelerator)
-            Event.off('done', solveThis)
-            Event.off('done', emittingDone)
-            stop_threads = True
-            break
+    stop = input()
+    if stop == "stop":
+        Event.off('done', solveThis)
+        Event.off('done', emittingDone)
+        stop_threads = True

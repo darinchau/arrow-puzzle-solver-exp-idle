@@ -6,11 +6,10 @@ from PIL import Image
 import numpy as np
 import time
 from subprocess import call
+import pyautogui
 from datetime import datetime
 import statistics
 import PySimpleGUI as sg
-
-t = []
 
 def initialize():
     # 1. Connect to device
@@ -24,21 +23,30 @@ def initialize():
     return devices[0]
 
 
+useGUIclick = True
+
 def take_screenshot(device, imagename):
     image = device.screencap()
     with open(imagename, 'wb') as f:
         f.write(image)
 
 # Sends click via adb to the phone
-def clickOn(x, y, wait = False):
-    call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
-    if wait:
-        time.sleep(3)
 
-#Wrapper for the click method
+
+def clickOn(x, y, wait=False):
+    if useGUIclick:
+        pyautogui.leftClick(x, y)
+    else:
+        call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
+    if wait:
+        time.sleep(1.2)
+
+# Wrapper for the click method
 def sendClick(localCoord: tuple):
-    imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
+    imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060) if useGUIclick else (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
     clickOn(imgCoords[0], imgCoords[1])
+    
+
 
 def getState(Img, imgCoord: tuple):
     if (imgCoord[0] < 0):
@@ -147,18 +155,9 @@ def solve(board, moves: list):
         board = MakeMoveOn(board, moves, (-1, 5))
     if solver[3]:
         board = MakeMoveOn(board, moves, (0, 6))
-        
+
     board, moves = propogate(board, moves)
     return moves
-
-
-def getStats(t):
-    nrsolve = len(t)
-    avg = round(sum(t)/nrsolve, 3)
-    stdev = statistics.stdev(t) if nrsolve > 2 else 0
-    stdev = round(stdev, 3)
-    minimum = round(min(t), 3)
-    return nrsolve, avg, stdev, minimum
 
 
 def solveBoard(device):
@@ -186,13 +185,11 @@ def solveBoard(device):
     sendClick((0, -8))
 
     solveTime = round((t2 - t1).total_seconds(), 3)
-    t.append((t2 - t1).total_seconds())
-    nrSolve, avg, std, m = getStats(t)
 
     if solveTime <= 1.800:
-        take_screenshot(device, 'screen' + str(nrSolve) + '.png')
+        take_screenshot(device, 'screen.png')
+        print("Screenshotted")
 
     time.sleep(0.3)
     sendClick((-4, 0))
-    print(f"Solve time: {solveTime}, solve {nrSolve}, Average = {avg}, Standard deviation = {std}, Fastest time = {m}")
     time.sleep(0.5)
