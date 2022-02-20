@@ -1,15 +1,12 @@
 # pip install -U pure-python-adb
 # pip install pillow
-# pip install pyautogui
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
 import time
 from subprocess import call
-import pyautogui
-from datetime import datetime
-import statistics
 import PySimpleGUI as sg
+
 
 def initialize():
     # 1. Connect to device
@@ -23,29 +20,21 @@ def initialize():
     return devices[0]
 
 
-useGUIclick = True
-
 def take_screenshot(device, imagename):
     image = device.screencap()
     with open(imagename, 'wb') as f:
         f.write(image)
 
-# Sends click via adb to the phone
-
 
 def clickOn(x, y, wait=False):
-    if useGUIclick:
-        pyautogui.leftClick(x, y)
-    else:
-        call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
+    call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
     if wait:
         time.sleep(1.2)
 
-# Wrapper for the click method
+
 def sendClick(localCoord: tuple):
-    imgCoords = (120 * localCoord[0] + 1333, -70 * localCoord[1] + 1060) if useGUIclick else (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
+    imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
     clickOn(imgCoords[0], imgCoords[1])
-    
 
 
 def getState(Img, imgCoord: tuple):
@@ -165,7 +154,6 @@ def solveBoard(device):
     take_screenshot(device, 'screen.png')
     image = Image.open('screen.png')
     Img = np.asarray(image)
-
     # 3. Get board state and store it into an array
     board = []
     for x in range(-3, 4):
@@ -173,23 +161,17 @@ def solveBoard(device):
         for y in range(-6, 7):
             arr.append(getState(Img, getImgCoord((x, y))))
         board.append(arr)
-
     # 4. Solve board and do bookkeeping
     moves = solve(board, [])
-    t1 = datetime.now()
+    t1 = time.time()
     for i in moves:
         sendClick(i)
-    t2 = datetime.now()
-
+    t2 = time.time()
     # 5. Reset and error check
     sendClick((0, -8))
-
-    solveTime = round((t2 - t1).total_seconds(), 3)
-
-    if solveTime <= 1.800:
+    if round(t2 - t1, 3) <= 1.800:
         take_screenshot(device, 'screen.png')
         print("Screenshotted")
-
     time.sleep(0.3)
     sendClick((-4, 0))
     time.sleep(0.5)

@@ -1,6 +1,7 @@
 from solver import *
 from subprocess import call
 import threading as thread
+from tkinter import messagebox
 
 _callbacks = {}
 cap = 650
@@ -32,12 +33,10 @@ def init():
     return initialize()
 
 def emittingDone(device):
-    # print("Done!")
     pass
 
-# Solves sthe board (recursively)
+# Solves sthe board
 def solveThis(device):
-    # print("Is solving")
     solveBoard(device)
 
 #######################################################################################################
@@ -100,7 +99,7 @@ def ahaha(device):
             Event.emit('done', device)
         except IndexError:
             stop_threads = True
-            print("Hey the emulator is dead")            
+            messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
         if stop_threads:
             break
 
@@ -116,7 +115,8 @@ if __name__ == '__main__':
     t2.start()
 
     stop = input()
-    if stop == "stop":
+    if stop == "stop" or stop_threads:
         Event.off('done', solveThis)
         Event.off('done', emittingDone)
+        Event.off('done', PressAccelerator)
         stop_threads = True
