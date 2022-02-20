@@ -1,5 +1,6 @@
 # pip install -U pure-python-adb
 # pip install pillow
+# pip install pysimplegui
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
@@ -7,8 +8,10 @@ import time
 from subprocess import call
 import PySimpleGUI as sg
 
+device = None
 
 def initialize():
+    global device
     # 1. Connect to device
     client = Client(host='127.0.0.1', port=5037)
     devices = client.devices()
@@ -16,11 +19,11 @@ def initialize():
     if len(devices) == 0:
         raise RuntimeError("No devices connected")
 
-    time.sleep(2)
-    return devices[0]
+    device = devices[0]
 
 
-def take_screenshot(device, imagename):
+def take_screenshot(imagename):
+    global device
     image = device.screencap()
     with open(imagename, 'wb') as f:
         f.write(image)
@@ -30,11 +33,6 @@ def clickOn(x, y, wait=False):
     call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
     if wait:
         time.sleep(1.2)
-
-
-def sendClick(localCoord: tuple):
-    imgCoords = (85 * localCoord[0] + 400, -50 * localCoord[1] + 720)
-    clickOn(imgCoords[0], imgCoords[1])
 
 
 def getState(Img, imgCoord: tuple):
@@ -148,12 +146,16 @@ def solve(board, moves: list):
     board, moves = propogate(board, moves)
     return moves
 
+def OnStop():
+    pass
 
-def solveBoard(device):
+
+def solveBoard():
     # 2. Get image
-    take_screenshot(device, 'screen.png')
+    take_screenshot('screen.png')
     image = Image.open('screen.png')
     Img = np.asarray(image)
+
     # 3. Get board state and store it into an array
     board = []
     for x in range(-3, 4):
@@ -165,12 +167,14 @@ def solveBoard(device):
     moves = solve(board, [])
     t1 = time.time()
     for i in moves:
-        sendClick(i)
+        imgCoords = getImgCoord(i)
+        clickOn(imgCoords[0], imgCoords[1])
     t2 = time.time()
+    
     # 5. Reset and error check
     clickOn(400, 1120)
     if round(t2 - t1, 3) <= 1.800:
-        take_screenshot(device, 'screen.png')
+        take_screenshot('screen.png')
         print("Screenshotted")
     clickOn(69, 720)
     time.sleep(0.5)

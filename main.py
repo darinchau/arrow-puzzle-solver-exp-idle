@@ -1,7 +1,8 @@
-from solver import *
+import solver
 from subprocess import call
 import threading as thread
 from tkinter import messagebox
+import time
 
 _callbacks = {}
 cap = 650
@@ -28,16 +29,16 @@ class Event():
 
 def init():
     print("Initializing")
-    Event.on('solve', solveThis)
+    Event.on('solve', solve)
     Event.on('solve', emittingDone)
-    initialize()
+    solver.initialize()
 
 def emittingDone():
     pass
 
 # Solves sthe board
-def solveThis():
-    solveBoard()
+def solve():
+    solver.solveBoard()
 
 #######################################################################################################
 
@@ -48,15 +49,15 @@ stop_threads = False
 # Handles the press accelerator event
 def PressAccelerator():
     Event.off('solve', PressAccelerator)
-    Event.on('solve', solveThis)
+    Event.on('solve', solve)
     # Cross 1
-    clickOn(764, 38, True)
+    solver.clickOn(764, 38, True)
 
     # Cross 2
-    clickOn(764, 314, True)
+    solver.clickOn(764, 314, True)
 
     # Play
-    clickOn(38, 326, True)
+    solver.clickOn(38, 326, True)
 
     x = 67
     y = 181
@@ -64,16 +65,16 @@ def PressAccelerator():
     call(["adb", "shell", "input", "swipe", str(x), str(y), str(x), str(y), str(3000)])
 
     # pause
-    clickOn(38, 326, True)
+    solver.clickOn(38, 326, True)
 
     # Minigame button
-    clickOn(396, 1136, True)
+    solver.clickOn(396, 1136, True)
 
     # Arrow puzzle
-    clickOn(407, 853, True)
+    solver.clickOn(407, 853, True)
 
     # Hard
-    clickOn(394, 690, True)
+    solver.clickOn(394, 690, True)
 
     time.sleep(1)
 
@@ -83,7 +84,7 @@ def EnqueueAccelerator():
     global stop_threads
     while True:
         if i < 0:
-            Event.off('solve', solveThis)
+            Event.off('solve', solve)
             Event.on('solve', PressAccelerator)
             print("Pressing accelerator")
             i = cap
@@ -117,7 +118,8 @@ if __name__ == '__main__':
 
     stop = input()
     if stop == "stop" or stop_threads:
-        Event.off('solve', solveThis)
+        Event.off('solve', solve)
         Event.off('solve', emittingDone)
         Event.off('solve', PressAccelerator)
+        solver.OnStop()
         stop_threads = True
