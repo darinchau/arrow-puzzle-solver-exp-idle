@@ -28,16 +28,16 @@ class Event():
 
 def init():
     print("Initializing")
-    Event.on('done', solveThis)
-    Event.on('done', emittingDone)
-    return initialize()
+    Event.on('solve', solveThis)
+    Event.on('solve', emittingDone)
+    initialize()
 
-def emittingDone(device):
+def emittingDone():
     pass
 
 # Solves sthe board
-def solveThis(device):
-    solveBoard(device)
+def solveThis():
+    solveBoard()
 
 #######################################################################################################
 
@@ -46,9 +46,9 @@ stop_threads = False
 # The accelerator part
 
 # Handles the press accelerator event
-def PressAccelerator(device):
-    Event.off('done', PressAccelerator)
-    Event.on('done', solveThis)
+def PressAccelerator():
+    Event.off('solve', PressAccelerator)
+    Event.on('solve', solveThis)
     # Cross 1
     clickOn(764, 38, True)
 
@@ -77,13 +77,14 @@ def PressAccelerator(device):
 
     time.sleep(1)
 
-def ehehe():
+# Queues the accelerator event
+def EnqueueAccelerator():
     i = 10
     global stop_threads
     while True:
         if i < 0:
-            Event.off('done', solveThis)
-            Event.on('done', PressAccelerator)
+            Event.off('solve', solveThis)
+            Event.on('solve', PressAccelerator)
             print("Pressing accelerator")
             i = cap
         else:
@@ -92,11 +93,11 @@ def ehehe():
         if stop_threads:
             break
 
-def ahaha(device):
+def CallBoardSolver():
     global stop_threads
     while True:
         try:
-            Event.emit('done', device)
+            Event.emit('solve')
         except IndexError:
             stop_threads = True
             messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
@@ -106,17 +107,17 @@ def ahaha(device):
 
 #Main function
 if __name__ == '__main__':
-    device = init()
+    init()
     
-    t1 = thread.Thread(target = ehehe)
+    t1 = thread.Thread(target = EnqueueAccelerator)
     t1.start()
 
-    t2 = thread.Thread(target = ahaha, args = (device, ))
+    t2 = thread.Thread(target = CallBoardSolver)
     t2.start()
 
     stop = input()
     if stop == "stop" or stop_threads:
-        Event.off('done', solveThis)
-        Event.off('done', emittingDone)
-        Event.off('done', PressAccelerator)
+        Event.off('solve', solveThis)
+        Event.off('solve', emittingDone)
+        Event.off('solve', PressAccelerator)
         stop_threads = True

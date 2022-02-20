@@ -168,10 +168,9 @@ def solveBoard(device):
         sendClick(i)
     t2 = time.time()
     # 5. Reset and error check
-    sendClick((0, -8))
+    clickOn(400, 1120)
     if round(t2 - t1, 3) <= 1.800:
         take_screenshot(device, 'screen.png')
         print("Screenshotted")
-    time.sleep(0.3)
-    sendClick((-4, 0))
+    clickOn(69, 720)
     time.sleep(0.5)
