@@ -83,6 +83,8 @@ def T5():
         print("Encountered Unexpected Type Error! Returning...")
         timer = 60
         return
+    
+    print("Current p value = e" + str(rho))
 
     if LastPublishMark == 0:
         LastPublishMark = rho
@@ -102,7 +104,7 @@ def T5():
         timer = 120
 
     elif rho < LastPublishMark + 5:
-        print("High stratting")
+        print("Theory 5: High stratting")
         # Set Checkboxes and buy c1
         SetCheckBox(823, 770, True, screen)
         SetCheckBox(913, 770, False, screen)
@@ -110,7 +112,7 @@ def T5():
         timer = 700
 
     else:
-        print("Publishing")
+        print("Theory 5: Publishing")
         LastPublishMark = rho
         SetCheckBox(823, 770, True, screen)
         SetCheckBox(913, 770, False, screen)
@@ -136,7 +138,7 @@ ActiveStrategy = T5
 
 if __name__ == "__main__":
     init()
-    # screen = take_screenshot('screen.png')
-    # rho = getrho(491, 300, 523, 100 , screen)
-    # print(rho)
+    screen = take_screenshot('screen.png')
+    rho = getrho(491, 300, 523, 100 , screen)
+    print(rho)
     ActiveStrategy()

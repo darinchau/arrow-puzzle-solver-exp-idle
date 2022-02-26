@@ -27,7 +27,7 @@ There are some extra functions in case you are interested; however they require 
 
 1. Auto-acceleration: If you have some auto clicker installed please have it spam somewhere about one quarter of down the top of the screen, and have its play button a bit below the accel button (on top). It should auto hold accel for you
 
-2. Auto T5: Install tesseract from https://github.com/UB-Mannheim/tesseract/wiki and pytesseract from "pip install pytesseract". Then somewhere around line 17 in theories.py, put the directory of tesseract.exe into the variable. A sample has been done for you.
+2. Auto T5: You need to have T5 unlocked and ready otherwise idk what will happen
 
 If you do not want these functionalities, please delete the line somewhere in the bottom of main.py where it says t1.start(). Otherwise, if it doesn't work for you, please download an older commit
 
