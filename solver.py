@@ -1,14 +1,15 @@
 # pip install -U pure-python-adb
 # pip install pillow
-# pip install pysimplegui
+from email import message
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
 import time
 from subprocess import call
-import PySimpleGUI as sg
+from tkinter import messagebox
 
 device = None
+
 
 def initialize():
     global device
@@ -24,15 +25,45 @@ def initialize():
 
 def take_screenshot(imagename):
     global device
+    if device == None:
+        initialize()
     image = device.screencap()
     with open(imagename, 'wb') as f:
         f.write(image)
+    image = Image.open(imagename)
+    arr = np.asarray(image)
+    if arr.shape != (1200, 800, 4):
+        raise RuntimeError("Wrong resolution. Please set your resolution to 1200 x 800!")
+    return arr
 
 
-def clickOn(x, y, wait=False):
-    call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
+def clickOn(x, y, wait=False, repeat=1):
+    for _ in range(repeat):
+        call(["adb", "shell", "input", "tap", f"{x}", f"{y}"])
+
     if wait:
         time.sleep(1.2)
+
+
+def clickReverse(x, y, wait=False, repeat=1):
+    clickOn(800 - y, x, wait, repeat)
+
+
+# Crop the photo using the language of memu coordinates which is sort of reversed
+def cropReverse(x1, y1, x2, y2, Image: np.ndarray):
+    if Image.shape != (1200, 800, 4):
+        message.showerror("Something went wrong while getting pixel!")
+        return np.zeros((4,))
+
+    if x1 > x2:
+        x2, x1 = x1, x2
+    if y1 < y2:
+        y2, y1 = y1, y2
+
+    if x1 == x2 and y1 == y2:
+        return Image[x1, 800-y1, :]
+
+    return Image[x1:x2, 800-y1: 800-y2, :]
 
 
 def getState(Img, imgCoord: tuple):
@@ -146,15 +177,14 @@ def solve(board, moves: list):
     board, moves = propogate(board, moves)
     return moves
 
+
 def OnStop():
     pass
 
 
 def solveBoard():
     # 2. Get image
-    take_screenshot('screen.png')
-    image = Image.open('screen.png')
-    Img = np.asarray(image)
+    Img = take_screenshot('screen.png')
 
     # 3. Get board state and store it into an array
     board = []
@@ -170,7 +200,7 @@ def solveBoard():
         imgCoords = getImgCoord(i)
         clickOn(imgCoords[0], imgCoords[1])
     t2 = time.time()
-    
+
     # 5. Reset and error check
     clickOn(400, 1120)
     if round(t2 - t1, 3) <= 1.800 and 0.100 <= round(t2 - t1, 3):

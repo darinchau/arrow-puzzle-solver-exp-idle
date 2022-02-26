@@ -3,9 +3,12 @@ from subprocess import call
 import threading as thread
 from tkinter import messagebox
 import time
+import theories
+import navigator
 
 _callbacks = {}
 cap = 650
+
 
 class Event():
     @staticmethod
@@ -20,83 +23,84 @@ class Event():
 
     @staticmethod
     def off(event_name, f):
-        try: 
+        try:
             _callbacks.get(event_name, []).remove(f)
         except ValueError:
             pass
 
 ################################################################################################################
 
+
 def init():
     print("Initializing")
     Event.on('solve', solve)
     Event.on('solve', emittingDone)
     solver.initialize()
+    theories.init()
+
 
 def emittingDone():
     pass
 
-# Solves sthe board
+
 def solve():
+    navigator.goto("arrow")
     solver.solveBoard()
 
 #######################################################################################################
 
+
 stop_threads = False
 
 # The accelerator part
-
 # Handles the press accelerator event
+
+
 def PressAccelerator():
     Event.off('solve', PressAccelerator)
-    Event.on('solve', solve)
-    # Cross 1
-    solver.clickOn(764, 38, True)
-
-    # Cross 2
-    solver.clickOn(764, 314, True)
-
-    # Play
+    navigator.goto("main")
     solver.clickOn(38, 326, True)
-
     x = 67
     y = 181
     # Accelerator
     call(["adb", "shell", "input", "swipe", str(x), str(y), str(x), str(y), str(3000)])
-
-    # pause
     solver.clickOn(38, 326, True)
-
-    # Minigame button
-    solver.clickOn(396, 1136, True)
-
-    # Arrow puzzle
-    solver.clickOn(407, 853, True)
-
-    # Hard
-    solver.clickOn(394, 690, True)
-
     time.sleep(1)
 
 # Queues the accelerator event
-def EnqueueAccelerator():
-    i = 10
+
+def CheckTheories():
+    # pass
+
+    Event.off('solve', CheckTheories)
+    # Navigate to theories page
+    navigator.goto("theories")
+    theories.ActiveStrategy()
+
+
+def EnqueueEvents():
+    i1 = 10
+    i2 = 12
     global stop_threads
     while True:
         try:
-            if i < 0:
-                Event.off('solve', solve)
+            if i1 < 0:
                 Event.on('solve', PressAccelerator)
                 print("Pressing accelerator")
-                i = cap
-            else:
-                time.sleep(1)
-                i -= 1
+                i1 = cap
+            if i2 < 0:
+                Event.on('solve', CheckTheories)
+                print("Checking theories")
+                i2 = theories.timer
+            time.sleep(1)
+            i1 -= 1
+            i2 -= 1
         except:
             stop_threads = True
             messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
         if stop_threads:
             break
+
 
 def CallBoardSolver():
     global stop_threads
@@ -110,14 +114,14 @@ def CallBoardSolver():
             break
 
 
-#Main function
+# Main function
 if __name__ == '__main__':
     init()
-    
-    t1 = thread.Thread(target = EnqueueAccelerator)
+
+    t1 = thread.Thread(target=EnqueueEvents)
     t1.start()
 
-    t2 = thread.Thread(target = CallBoardSolver)
+    t2 = thread.Thread(target=CallBoardSolver)
     t2.start()
 
     stop = input()
@@ -125,5 +129,6 @@ if __name__ == '__main__':
         Event.off('solve', solve)
         Event.off('solve', emittingDone)
         Event.off('solve', PressAccelerator)
+        Event.off('solve', CheckTheories)
         solver.OnStop()
         stop_threads = True

@@ -1,6 +1,6 @@
-This script solves the exponential idle hard arrow puzzle. It hasn't been very well tested yet but oh well
+# Arrow puzzle solver
 
-I decided to share this script because why not.
+This script solves the exponential idle hard arrow puzzle. This program is distributed AS IS. If there is an error, please raise it in the issues page.
 
 Instructions:
 
@@ -9,7 +9,9 @@ Pure python adb for reading and sending phone data: pip install -U pure-python-a
 Pillow for image recognition: pip install pillow
 MEmu: the emulator of choice
 
-1. Install exponential idle on your emulator (tested on Android 7.1) and go to the hard arrow puzzle page
+Also, we assume you have ee5000+. Otherwise, you can uncomment "pass" under CheckTheories() in main.py
+
+1. Your exponential idle must be on dark mode, English
 
 2. Connect your emulator to the adb server by running "adb connect 127.0.0.1:21503" on your server
 
@@ -18,6 +20,19 @@ MEmu: the emulator of choice
 4. Set the arrow puzzle settings to greyscale and displaying numbers
 
 5. Run the script. If everything goes well it should solve on it's own.
+
+There are some extra functions in case you are interested; however they require extra setup
+
+# Other functionalities
+
+1. Auto-acceleration: If you have some auto clicker installed please have it spam somewhere about one quarter of down the top of the screen, and have its play button a bit below the accel button (on top). It should auto hold accel for you
+
+2. Auto T5: Install tesseract from https://github.com/UB-Mannheim/tesseract/wiki and pytesseract from "pip install pytesseract". Then somewhere around line 17 in theories.py, put the directory of tesseract.exe into the variable. A sample has been done for you.
+
+If you do not want these functionalities, please delete the line somewhere in the bottom of main.py where it says t1.start(). Otherwise, if it doesn't work for you, please download an older commit
+
+
+=================================================================================================================
 
 
 Update: I decided to remove everything except the basic functionalities so that the user could get an experience as smooth as possible
