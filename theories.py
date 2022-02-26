@@ -88,6 +88,7 @@ def T5():
 
     if LastPublishMark == 0:
         LastPublishMark = rho
+        timer = 100
         return
 
     # Step 2: Determine checkbox status

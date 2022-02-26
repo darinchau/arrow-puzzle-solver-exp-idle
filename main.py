@@ -57,6 +57,7 @@ stop_threads = False
 
 
 def PressAccelerator():
+    print("Pressing accelerator")
     Event.off('solve', PressAccelerator)
     navigator.goto("main")
     solver.clickOn(38, 326, True)
@@ -71,10 +72,15 @@ def PressAccelerator():
 
 def CheckTheories():
     # pass
+    print("Checking theories")
     Event.off('solve', CheckTheories)
     # Navigate to theories page
     navigator.goto("theories")
     theories.ActiveStrategy()
+
+    #Failsave
+    if theories.timer < 0:
+        theories.timer = 100
 
 
 def EnqueueEvents():
@@ -84,11 +90,10 @@ def EnqueueEvents():
         try:
             if i1 < 0:
                 Event.on('solve', PressAccelerator)
-                print("Pressing accelerator")
                 i1 = cap
-            if theories.timer == 0:
+            if theories.timer < 0:
                 Event.on('solve', CheckTheories)
-                print("Checking theories")
+                theories.timer = 1000
             time.sleep(1)
             i1 -= 1
             theories.timer -= 1
