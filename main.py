@@ -83,14 +83,18 @@ def EnqueueAccelerator():
     i = 10
     global stop_threads
     while True:
-        if i < 0:
-            Event.off('solve', solve)
-            Event.on('solve', PressAccelerator)
-            print("Pressing accelerator")
-            i = cap
-        else:
-            time.sleep(1)
-            i -= 1
+        try:
+            if i < 0:
+                Event.off('solve', solve)
+                Event.on('solve', PressAccelerator)
+                print("Pressing accelerator")
+                i = cap
+            else:
+                time.sleep(1)
+                i -= 1
+        except:
+            stop_threads = True
+            messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
         if stop_threads:
             break
 
@@ -99,7 +103,7 @@ def CallBoardSolver():
     while True:
         try:
             Event.emit('solve')
-        except IndexError:
+        except:
             stop_threads = True
             messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
         if stop_threads:

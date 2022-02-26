@@ -173,8 +173,8 @@ def solveBoard():
     
     # 5. Reset and error check
     clickOn(400, 1120)
-    if round(t2 - t1, 3) <= 1.800:
-        take_screenshot('screen.png')
+    if round(t2 - t1, 3) <= 1.800 and 0.100 <= round(t2 - t1, 3):
+        take_screenshot(f'screen{t2 - t1}.png')
         print("Screenshotted")
     clickOn(69, 720)
     time.sleep(0.5)
