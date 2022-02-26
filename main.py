@@ -60,18 +60,17 @@ def PressAccelerator():
     Event.off('solve', PressAccelerator)
     navigator.goto("main")
     solver.clickOn(38, 326, True)
-    x = 67
-    y = 181
     # Accelerator
-    call(["adb", "shell", "input", "swipe", str(x), str(y), str(x), str(y), str(3000)])
+    call(["adb", "shell", "input", "swipe", str(67),
+         str(181), str(67), str(181), str(3000)])
     solver.clickOn(38, 326, True)
     time.sleep(1)
 
 # Queues the accelerator event
 
+
 def CheckTheories():
     # pass
-
     Event.off('solve', CheckTheories)
     # Navigate to theories page
     navigator.goto("theories")
@@ -80,7 +79,6 @@ def CheckTheories():
 
 def EnqueueEvents():
     i1 = 10
-    i2 = 12
     global stop_threads
     while True:
         try:
@@ -88,13 +86,12 @@ def EnqueueEvents():
                 Event.on('solve', PressAccelerator)
                 print("Pressing accelerator")
                 i1 = cap
-            if i2 < 0:
+            if theories.timer == 0:
                 Event.on('solve', CheckTheories)
                 print("Checking theories")
-                i2 = theories.timer
             time.sleep(1)
             i1 -= 1
-            i2 -= 1
+            theories.timer -= 1
         except:
             stop_threads = True
             messagebox.showerror("Dead Emulator", "Hey the emulator is dead")

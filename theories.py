@@ -2,54 +2,74 @@ from solver import clickReverse, take_screenshot, cropReverse
 from PIL import Image
 import numpy as np
 import time
-import navigator
-try:
-    import pytesseract
-except:
+import navigator, check
+
+def init():
     pass
 
 
-def init():
-    global LastPublishMark
-    if pytesseract == None:
-        global ActiveStrategy
-        ActiveStrategy = NoTheoriesForYou
-        return
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
-
-
 # Constants
-timer = 100
+timer = 12
 LastPublishMark = 0
 
+def find_subsequence(arr, subarr, threshold = 5):
+    s = len(arr) - len(subarr) + 1
+    rolling = np.zeros((s,) + subarr.shape)
+    for i in range(s):
+        rolling[i] = arr[-len(subarr):]
+        arr = arr[:-1]
+    n = [navigator.compare(a, subarr, threshold) for a in rolling]
+    return np.flip(n)
 
-def getrho(x1, y1, x2, y2):
-    global timer
-    try:
-        # Gives it like 5 tries or so
-        for _ in range(10):
-            # Get last publish mark
-            screen = take_screenshot('screen.png')
-            im = Image.fromarray(cropReverse(x1, y1, x2, y2, screen))
-            rho = pytesseract.image_to_string(im)
-            if rho.find("e") > 0:
-                break
-            else:
-                time.sleep(1)
 
-        rho = rho.strip()
-        rho = rho[rho.find("e") + 1:-1]
-        print(rho)
-        if len(rho) <= 0:
-            print("Error: could not read rho")
-            raise RuntimeError("Pytesseract error")
-        rho = int(rho)
-        return rho, screen
-    except:
-        # Some error occured during setup. Trying again later
-        timer = 100
-        print("Pytesseract error. Aborting theories")
-        return 0, screen
+def getrho(x1, y1, x2, y2, screen: np.ndarray):
+    # Turn image into array
+    r = cropReverse(x1, y1, x2, y2, screen)
+    cr = r[:, :, 0].transpose((1,0))
+    # Image.fromarray(r).show()
+    # Find e
+    e_pos = np.where(find_subsequence(cr, np.array(check.valuee)))[0]
+    if e_pos.shape[0] == 0:
+        e_pos = np.where(find_subsequence(cr, np.array(check.valuee), 15))[0]
+        if e_pos.shape[0] == 0:
+            print("Cannot find e!")
+            return 0
+    first_viable_pixel = e_pos[0] + len(check.valuee)
+    # print(first_viable_pixel)
+
+    #Crop the image and calculate the p value
+    r2 = cropReverse(x1, y1 - first_viable_pixel, x2, y2, screen)
+    cr2 = r2[:, :, 0].transpose((1,0))
+    # Image.fromarray(r2).show()
+
+    #Get the numbers and store them temporarily in an array
+    positions = []
+    for i in range(len(check.values)):
+        num_pos = np.where(find_subsequence(cr2, np.array(check.values[i])))[0]
+        if len(num_pos) > 0:
+            positions += [[i, p] for p in num_pos]
+
+    # Sort said array according to the positions they appeared in
+    positions.sort(key = lambda e: e[1])
+    # print(positions)
+    n = [str(i[0]) for i in positions]
+    rho = "".join(n)
+    # print(rho)
+    return int(rho)
+
+
+# Sets the checkbox value to the intended value
+def SetCheckBox(x, y, toggle, screen):
+    state = cropReverse(x, y, x, y, screen)[0] > 30
+    if state != toggle:
+        clickReverse(x, y)
+
+def BuyAllVariable(x, y):
+    while not navigator.IsOnTheoryx1():
+        clickReverse(561, 65)
+    clickReverse(561, 65, repeat=4, wait=True)
+    clickReverse(x, y, wait=True)
+    clickReverse(561, 65, wait=True)
 
 
 def T5():
@@ -57,72 +77,43 @@ def T5():
     global LastPublishMark
 
     # Step 1: try to read current rho value
-    rho, screen = getrho(491, 300, 523, 100)
-    assert(type(screen) == np.ndarray)
+    screen = take_screenshot('screen.png')
+    rho = getrho(491, 300, 523, 100, screen)
+    if type(screen) != np.ndarray or rho == 0:
+        print("Encountered Unexpected Type Error! Returning...")
+        timer = 60
+        return
+
+    if LastPublishMark == 0:
+        LastPublishMark = rho
+        return
 
     # Step 2: Determine checkbox status
-    checkbox1 = cropReverse(643, 770, 643, 770, screen)[0] > 30
-    checkbox2 = cropReverse(733, 770, 733, 770, screen)[0] > 30
-    checkbox3 = cropReverse(823, 770, 823, 770, screen)[0] > 30
-    checkbox4 = cropReverse(913, 770, 913, 770, screen)[0] > 30
-    checkbox5 = cropReverse(979, 784, 979, 784, screen)[0] > 30
-    c = (checkbox1, checkbox2, checkbox3, checkbox4, checkbox5)
+    SetCheckBox(643, 770, True, screen)
+    SetCheckBox(733, 770, True, screen)
+    SetCheckBox(979, 784, True, screen)
 
     if rho < LastPublishMark - 10:
-        print("Low stratting")
+        print("Theory 5: Low stratting")
         # Set Checkboxes and buy c2
-        if not c[0]:
-            clickReverse(643, 770)
-        if not c[1]:
-            clickReverse(733, 770)
-        if not c[2]:
-            clickReverse(823, 770)
-        if c[3]:
-            clickReverse(913, 770)
-        if not c[4]:
-            clickReverse(979, 784)
-
-        # Buy c2
-        while not navigator.IsOnTheoryx1():
-            clickReverse(561, 65)
-        clickReverse(561, 65, repeat=4, wait=True)
-        clickReverse(910, 400, wait=True)
-        clickReverse(561, 65, wait=True)
+        SetCheckBox(823, 770, True, screen)
+        SetCheckBox(913, 770, False, screen)
+        BuyAllVariable(910, 400)
         timer = 120
 
     elif rho < LastPublishMark + 5:
         print("High stratting")
         # Set Checkboxes and buy c1
-        if not c[0]:
-            clickReverse(643, 770)
-        if not c[1]:
-            clickReverse(733, 770)
-        if c[2]:
-            clickReverse(823, 770)
-        if not c[3]:
-            clickReverse(913, 770)
-        if not c[4]:
-            clickReverse(979, 784)
-
-        # buying c1
-        clickReverse(561, 65, repeat=4, wait=True)
-        clickReverse(810, 400, wait=True)
-        clickReverse(561, 65, wait=True)
+        SetCheckBox(823, 770, True, screen)
+        SetCheckBox(913, 770, False, screen)
+        BuyAllVariable(810, 400)
         timer = 700
 
     else:
         print("Publishing")
         LastPublishMark = rho
-        if not c[0]:
-            clickReverse(643, 770)
-        if not c[1]:
-            clickReverse(733, 770)
-        if not c[2]:
-            clickReverse(823, 770)
-        if c[3]:
-            clickReverse(913, 770)
-        if not c[4]:
-            clickReverse(979, 784)
+        SetCheckBox(823, 770, True, screen)
+        SetCheckBox(913, 770, False, screen)
 
         # Publish
         clickReverse(154, 38)
@@ -145,5 +136,7 @@ ActiveStrategy = T5
 
 if __name__ == "__main__":
     init()
-    rho, screen = getrho(491, 300, 523, 100)
+    # screen = take_screenshot('screen.png')
+    # rho = getrho(491, 300, 523, 100 , screen)
+    # print(rho)
     ActiveStrategy()
