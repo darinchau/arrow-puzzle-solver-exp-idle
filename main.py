@@ -84,7 +84,7 @@ def CheckTheories():
 
 
 def EnqueueEvents():
-    i1 = 10
+    i1 = 200
     global stop_threads
     while True:
         try:
@@ -93,13 +93,14 @@ def EnqueueEvents():
                 i1 = cap
             if theories.timer < 0:
                 Event.on('solve', CheckTheories)
-                theories.timer = 1000
+                theories.timer = 10000
             time.sleep(1)
             i1 -= 1
             theories.timer -= 1
-        except:
-            stop_threads = True
-            messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
+        except Exception as err:
+            print(err)
+            time.sleep(100)
+            call(["adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", "com.conicgames.exponentialidle/crc64327945add1aba81c.MainActivity"])
         if stop_threads:
             break
 
@@ -109,9 +110,10 @@ def CallBoardSolver():
     while True:
         try:
             Event.emit('solve')
-        except:
-            stop_threads = True
-            messagebox.showerror("Dead Emulator", "Hey the emulator is dead")
+        except Exception as err:
+            print(err)
+            time.sleep(100)
+            call(["adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", "com.conicgames.exponentialidle/crc64327945add1aba81c.MainActivity"])
         if stop_threads:
             break
 

@@ -1,5 +1,6 @@
 # pip install -U pure-python-adb
 # pip install pillow
+import os
 from email import message
 from ppadb.client import Client
 from PIL import Image
@@ -18,7 +19,11 @@ def initialize():
     devices = client.devices()
 
     if len(devices) == 0:
-        raise RuntimeError("No devices connected")
+        call(["adb", "connect", "127.0.0.1:21503"])
+        client = Client(host='127.0.0.1', port=5037)
+        devices = client.devices()
+        if len(devices) == 0:
+            raise RuntimeError("No devices connected")
 
     device = devices[0]
 

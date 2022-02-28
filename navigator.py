@@ -1,6 +1,7 @@
 from solver import take_screenshot, cropReverse, clickReverse
 import numpy as np
 import check 
+import time
 
 
 def compare(arr1: np.ndarray, arr2: np.ndarray, threshold = 5, match = 0.9):
@@ -73,6 +74,7 @@ def CheckLocation():
 
 # Attempts to navigate to a given location. Returns true if we successfully arrived
 def goto(destination):
+    # Checking
     if destination not in ["theories", "students", "main", "arrow"]:
         print("Wrong destination variables: " + destination)
         raise AssertionError("Wrong destination variables: " + destination)
@@ -82,25 +84,27 @@ def goto(destination):
     if location == destination:
         return True
 
+    # Spams cross button for good measures
     print("Going from " + orig + " to " + destination)
     clickReverse(34, 34, repeat=5, wait = True)
     location = CheckLocation()
 
+    # One of the main screen now
     if destination in ["theories", "students", "main"]:
         i = 0
         while location != destination and i < 5:
             clickReverse(1137, 86, wait = True)
             location = CheckLocation()
             i += 1
-        if CheckLocation() != destination:
-            print(f"Going from {orig} to {destination} but got lost")
-            return False
         if i > 5:
-            print("You probably haven't unlocked theories or students yet. Please uncomment pass. Read README for more details")
+            return False
     
     elif destination == "arrow":
         if not GiftAvailable():
-            raise AssertionError("We don't know where we are!")
+            clickReverse(34, 34, repeat=5, wait = True)
+            time.sleep(5)
+            return goto("arrow")
+        
         # Minigame button, arrow puzzle, hard
         clickReverse(1137, 405, wait = True)
         clickReverse(840, 372, wait = True)
@@ -108,8 +112,8 @@ def goto(destination):
 
     # Checking
     if CheckLocation() != destination:
-        print(f"Going from {orig} to {destination} but got lost")
-        return False
+        return goto(destination)
+
     return True
 
 def IsCheckBoxOn(Image=None):
