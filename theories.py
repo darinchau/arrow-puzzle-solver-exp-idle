@@ -13,6 +13,9 @@ timer = 12
 __lastTimer = 12
 LastPublishMark = 0
 
+# Not really the publish multiplier but the ratio of y/x before it publishes
+PublishMultiplier = 694200
+
 def setTimer(t):
     global timer 
     timer = t
@@ -54,7 +57,12 @@ def cropAndFilter(x1, y1, x2, y2, screen):
     return int("".join(n))
 
 
-def GetVariableValue(x1, y1, x2, y2, screen: np.ndarray):
+def GetVariableValue(x1, y1, x2, y2, screen: np.ndarray, tolerance = 5):
+    # Fail fail save
+    if tolerance > 50:
+        print("Failed getting e, trying again...")
+        return 0
+    
     # Turn image into array
     r = cropReverse(x1, y1, x2, y2, screen)
     cr = r[:, :, 0].transpose((1,0))
@@ -62,9 +70,7 @@ def GetVariableValue(x1, y1, x2, y2, screen: np.ndarray):
     # Find e
     e_pos = np.where(find_subsequence(cr, np.array(check.valuee)))[0]
     if e_pos.shape[0] == 0:
-        print("Failed getting e, trying again...")
-        navigator.goto("theories")
-        return GetVariableValue(x1, y1, x2, y2, take_screenshot("screen.png"))
+        return GetVariableValue(x1, y1, x2, y2, take_screenshot("screen.png"), tolerance + 5)
         
     first_viable_pixel = e_pos[0] + len(check.valuee)
     exponent = cropAndFilter(x1, y1-first_viable_pixel, x2, y2, screen)
@@ -74,6 +80,9 @@ def GetVariableValue(x1, y1, x2, y2, screen: np.ndarray):
 
 # Sets the checkbox value to the intended value
 def SetCheckBox(x, y, toggle, screen):
+    while not navigator.IsCheckBoxOn(screen):
+        clickReverse(1032,766, True)
+        screen = take_screenshot("screen.png")
     state = cropReverse(x, y, x, y, screen)[0] > 30
     if state != toggle:
         clickReverse(x, y)
@@ -85,6 +94,27 @@ def BuyAllVariable(x, y, mode = 0, count = 1):
     clickReverse(x, y, repeat = count ,wait = True)
     if mode > 0:
         clickReverse(561, 65, repeat = 5 - mode, wait=True)
+
+def BuyUntil(x1, y1, x2, y2, threshold):
+    assert x2 - x1 == 32
+    screen = take_screenshot('screen.png')
+    var = GetVariableValue(x1, y1, x2, y2, screen)
+    rho = GetVariableValue(491, 300, 523, 100, screen)
+    if var == 0 or rho == 0:
+        setTimer(min(60, __lastTimer))
+        return False
+    
+    while var < rho + np.log10(threshold):            
+        BuyAllVariable(x1, y1, count = 2)
+        screen = take_screenshot('screen.png')
+        rho = GetVariableValue(491, 300, 523, 100, screen)
+        var = GetVariableValue(x1, y1, x2, y2, screen)
+        # Fail save - cannot read variable, probably because it is greyed out
+        if var == 0 or rho == 0:
+            setTimer(min(60, __lastTimer))
+            return False
+    
+    return True
 
 def Publish():
     # Publish
@@ -103,43 +133,12 @@ def T5():
     # Step 1: try to read current rho value
     screen = take_screenshot('screen.png')
     rho = GetVariableValue(491, 300, 523, 100, screen)
-    if type(screen) != np.ndarray or rho == 0:
-        print("Encountered Unexpected Type Error! Returning...")
+    tau = GetVariableValue(491, 700, 523, 500, screen)
+    
+    print(f"Current rho = e{rho}. Current tau = e{tau}. Next publish at e{LastPublishMark + np.log10(PublishMultiplier)}")
+    if tau == 0 or rho == 0:
         setTimer(min(60, __lastTimer))
         return
-    
-    print(f"Current rho = e{rho}")
-
-    if LastPublishMark == 0:
-        #Read current tau
-        tau = GetVariableValue(491, 700, 523, 500, screen)
-        if tau == 0:
-            setTimer(min(60, __lastTimer))
-            return
-        print(f"Current tau = e{tau}")
-        if tau == rho:
-            LastPublishMark = tau - 3
-        else:
-            LastPublishMark = tau
-
-    def BuyUntil(x1, y1, x2, y2, threshold):
-        assert x2 - x1 == 32
-        screen = take_screenshot('screen.png')
-        var = GetVariableValue(x1, y1, x2, y2, screen)
-        rho = GetVariableValue(491, 300, 523, 100, screen)
-        if var == 0 or rho == 0:
-            setTimer(min(60, __lastTimer))
-            return
-        
-        while var < rho + np.log10(threshold):            
-            BuyAllVariable(x1, y1, count = 2)
-            screen = take_screenshot('screen.png')
-            rho = GetVariableValue(491, 300, 523, 100, screen)
-            var = GetVariableValue(x1, y1, x2, y2, screen)
-            # Fail save - cannot read variable, probably because it is greyed out
-            if var == 0 or rho == 0:
-                setTimer(min(60, __lastTimer))
-                return
 
     # Step 2: Determine checkbox status
     def SetBoxes(settings):
@@ -149,15 +148,35 @@ def T5():
         SetCheckBox(913, 770, settings[3], screen)
         SetCheckBox(979, 784, settings[4], screen)
 
+    if LastPublishMark == 0:
+        if not navigator.IsPublishable(screen):
+            LastPublishMark = tau
+        else:
+            SetBoxes([False, True, False, True, True])
+            print("Theory 5: High stratting + Publish")
+            BuyUntil(787, 135, 819, 1, 0.04)
+            BuyUntil(611, 135, 643, 1, 0.04)
+            SetBoxes([True, True, True, False, True])
+            nextpub = np.log10(42042069) + rho
+            print(f"Theory 5: Publishing. Next publish at: e{nextpub}")
+            LastPublishMark = rho
+            Publish()
+            setTimer(1)
+            BuyAllVariable(910, 400, 1, 10)
+        T5()
+        return
+
     if rho < LastPublishMark - 10:
         # Set Checkboxes and buy c2
         SetBoxes([True, True, True, False, True])
         print("Theory 5: Low stratting")
-        BuyUntil(875, 135, 907, 1, 0.01)
+        while not BuyUntil(875, 135, 907, 1, 0.01):
+            # Triggered failsave
+            BuyAllVariable(900, 400, mode = 2, count = 5)
         setTimer(__lastTimer + 4) 
 
     # Publish at multiplier >= 7.62
-    elif rho < LastPublishMark + np.log10(42042069):
+    elif rho < LastPublishMark + np.log10(PublishMultiplier):
         # Set Checkboxes and buy c1
         SetBoxes([False, True, False, True, True])
         print("Theory 5: High stratting")
@@ -167,7 +186,7 @@ def T5():
 
     else:
         SetBoxes([True, True, True, False, True])
-        nextpub = np.log10(42042069) * rho
+        nextpub = np.log10(PublishMultiplier) + rho
         print(f"Theory 5: Publishing. Next publish at: e{nextpub}")
         LastPublishMark = rho
         Publish()
@@ -189,11 +208,3 @@ ActiveStrategy = T5
 if __name__ == "__main__":
     init()
     ActiveStrategy()
-    # screen = take_screenshot('screen.png')
-    # start_range = 873
-    # for i in range(start_range, start_range + 40):
-    #     c2 = getrho(i, 135, i + 32, 1, screen)
-    #     if c2 > 0:
-    #         print(i)
-    #         print(i+32)
-    #         print(c2)

@@ -19,6 +19,8 @@ def initialize():
     devices = client.devices()
 
     if len(devices) == 0:
+        call(["adb", "kill-server"])
+        call(["adb", "start-server"])
         call(["adb", "connect", "127.0.0.1:21503"])
         client = Client(host='127.0.0.1', port=5037)
         devices = client.devices()

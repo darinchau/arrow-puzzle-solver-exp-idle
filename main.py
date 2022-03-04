@@ -93,7 +93,7 @@ def EnqueueEvents():
                 i1 = cap
             if theories.timer < 0:
                 Event.on('solve', CheckTheories)
-                theories.timer = 10000
+                theories.timer = cap
             time.sleep(1)
             i1 -= 1
             theories.timer -= 1

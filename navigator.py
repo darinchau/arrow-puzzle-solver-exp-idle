@@ -131,10 +131,21 @@ def IsOnTheoryx1(Image=None):
     coordinates = (556, 131, 568, 90)
     return Checker(coordinates, checker, Image)
 
+
+
+def IsPublishable(Image=None):
+    if not IsOnTheories(Image):
+        return False
+    checker = np.array(check.publish)
+    coordinates = (138, 55, 157, 20)
+    return Checker(coordinates, checker, Image)
+
+
 if __name__ == "__main__":
-    coordinates = (1005, 794, 1035, 765)
-    Image = take_screenshot('screen.png')
-    im = cropReverse(coordinates[0], coordinates[1],
-                     coordinates[2], coordinates[3], Image)
-    im = im[:, :, 0]
-    print2Darray(im)
+    # coordinates = (138, 55, 157, 20)
+    # Image = take_screenshot('screen.png')
+    # im = cropReverse(coordinates[0], coordinates[1],
+    #                  coordinates[2], coordinates[3], Image)
+    # im = im[:, :, 0]
+    # print2Darray(im)
+    print(IsPublishable())
