@@ -1,25 +1,33 @@
+from email import message
 import solver
 from subprocess import call
-import threading as thread
+import threading
 from tkinter import messagebox
 import time
 import theories
 import navigator
+import msvcrt
+import sys
 
 _callbacks = {}
-cap = 650
 
 
 class Event():
     @staticmethod
     def on(event_name, f):
+        if event_name in _callbacks and f in _callbacks[event_name]:
+            return
+
         _callbacks[event_name] = _callbacks.get(event_name, []) + [f]
-        return f
 
     # Emit is not really an event but just calling the functions in callback one by one
     @staticmethod
     def emit(event_name, *data):
-        [f(*data) for f in _callbacks.get(event_name, [])]
+        global stop_threads
+        for f in _callbacks.get(event_name, []):
+            f(*data)
+            if stop_threads:
+                break
 
     @staticmethod
     def off(event_name, f):
@@ -34,13 +42,8 @@ class Event():
 def init():
     print("Initializing")
     Event.on('solve', solve)
-    Event.on('solve', emittingDone)
     solver.initialize()
     theories.init()
-
-
-def emittingDone():
-    pass
 
 
 def solve():
@@ -57,10 +60,12 @@ stop_threads = False
 
 
 def PressAccelerator():
+
     print("Pressing accelerator")
     Event.off('solve', PressAccelerator)
     navigator.goto("main")
     solver.clickOn(38, 326, True)
+
     # Accelerator
     call(["adb", "shell", "input", "swipe", str(67),
          str(181), str(67), str(181), str(3000)])
@@ -74,65 +79,125 @@ def CheckTheories():
     # pass
     print("Checking theories")
     Event.off('solve', CheckTheories)
+
     # Navigate to theories page
     navigator.goto("theories")
     theories.ActiveStrategy()
 
-    #Failsave
+    # Failsave
     if theories.timer < 0:
         theories.timer = 100
 
 
+__err_counter = 0
+reseterrcap = 300
+__reset_err = reseterrcap
+
+
+def HandleError(err: Exception):
+    global __err_counter, __reset_err
+    __err_counter += 1
+    __reset_err = reseterrcap
+
+    print(err)
+    time.sleep(10)
+    call(["adb", "shell", "am", "start", "-a", "android.intent.action.MAIN",
+         "-n", "com.conicgames.exponentialidle/crc64327945add1aba81c.MainActivity"])
+
+    if __err_counter > 5:
+        print("Exceeded max error count! Stopping")
+        return False
+    return True
+
+
+def Decrement(counter: int, f, limit: int = 300):
+    if counter < 0:
+        Event.on("solve", f)
+        return limit
+    return counter - 1
+
+
+def reset_err():
+    global __err_counter
+    __err_counter = 0
+
+
 def EnqueueEvents():
-    i1 = 200
-    global stop_threads
-    while True:
+    i1 = 13
+    global stop_threads, __reset_err
+    while not stop_threads:
         try:
-            if i1 < 0:
-                Event.on('solve', PressAccelerator)
-                i1 = cap
-            if theories.timer < 0:
-                Event.on('solve', CheckTheories)
-                theories.timer = cap
+            i1 = Decrement(i1, PressAccelerator,  650)
+            theories.timer = Decrement(theories.timer, CheckTheories, 1000)
+            __reset_err = Decrement(__reset_err, reset_err, reseterrcap)
             time.sleep(1)
-            i1 -= 1
-            theories.timer -= 1
+
         except Exception as err:
-            print(err)
-            time.sleep(100)
-            call(["adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", "com.conicgames.exponentialidle/crc64327945add1aba81c.MainActivity"])
-        if stop_threads:
-            break
+            if not HandleError(err):
+                stop_threads = True
+                messagebox.showerror("RIP emulator.")
 
 
 def CallBoardSolver():
     global stop_threads
-    while True:
+    while not stop_threads:
         try:
             Event.emit('solve')
         except Exception as err:
-            print(err)
-            time.sleep(100)
-            call(["adb", "shell", "am", "start", "-a", "android.intent.action.MAIN", "-n", "com.conicgames.exponentialidle/crc64327945add1aba81c.MainActivity"])
-        if stop_threads:
-            break
+            if not HandleError(err):
+                stop_threads = True
+                messagebox.showerror("RIP emulator.")
+
+
+def readInput(default, timeout = 5):
+    class KeyboardThread(threading.Thread):
+        def run(self):
+            self.timedout = False
+            self.input = ''
+            while True:
+                if msvcrt.kbhit():
+                    chr = msvcrt.getche()
+                    if ord(chr) == 13:
+                        break
+                    elif ord(chr) >= 32:
+                        self.input += chr.decode('utf-8')
+                if len(self.input) == 0 and self.timedout:
+                    break    
+
+    result = default
+    it = KeyboardThread()
+    it.start()
+    it.join(timeout)
+    it.timedout = True
+    if len(it.input) > 0:
+        # wait for rest of input
+        it.join()
+        result = it.input
+    return result
+
+def stop():
+    global stop_threads
+    stop_st = ""
+    while stop_st == "" and not stop_threads:
+        stop_st = readInput("", timeout = 2)
+    stop_threads = True
 
 
 # Main function
 if __name__ == '__main__':
     init()
 
-    t1 = thread.Thread(target=EnqueueEvents)
+    t1 = threading.Thread(target=EnqueueEvents)
     t1.start()
 
-    t2 = thread.Thread(target=CallBoardSolver)
+    t2 = threading.Thread(target=CallBoardSolver)
     t2.start()
 
-    stop = input()
-    if stop == "stop" or stop_threads:
-        Event.off('solve', solve)
-        Event.off('solve', emittingDone)
-        Event.off('solve', PressAccelerator)
-        Event.off('solve', CheckTheories)
-        solver.OnStop()
-        stop_threads = True
+    while not stop_threads:
+        time.sleep(1)
+    
+    Event.off('solve', solve)
+    Event.off('solve', PressAccelerator)
+    Event.off('solve', CheckTheories)
+    solver.OnStop()
+    stop_threads = True

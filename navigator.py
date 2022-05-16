@@ -4,6 +4,8 @@ import check
 import time
 
 
+# Threshold: maximal pixel difference to be counted as a pixel matching
+# Match: percentage of pixel needed to count the whole image as matching
 def compare(arr1: np.ndarray, arr2: np.ndarray, threshold = 5, match = 0.9):
     if not arr1.shape == arr2.shape:
         return False
@@ -22,13 +24,13 @@ def print2Darray(im: np.ndarray):
         print("]" if i == im.shape[0] - 1 else "],")
 
 
-def Checker(coordinates: tuple, checker: np.ndarray, Image=None):
+def Checker(coordinates: tuple, checker: np.ndarray, Image=None, threshold = 5, match = 0.9):
     if type(Image) == type(None):
         Image = take_screenshot('screen.png')
     im = cropReverse(coordinates[0], coordinates[1],
                      coordinates[2], coordinates[3], Image)
     im = im[:, :, 0]
-    return compare(im, checker)
+    return compare(im, checker, threshold, match)
 
 
 def IsOnTheories(Image=None):

@@ -1,7 +1,6 @@
 # pip install -U pure-python-adb
 # pip install pillow
 import os
-from email import message
 from ppadb.client import Client
 from PIL import Image
 import numpy as np
@@ -12,18 +11,27 @@ from tkinter import messagebox
 device = None
 
 
-def initialize():
+def PanicFix():
     global device
-    # 1. Connect to device
+    call(["adb", "kill-server"])
+    call(["adb", "start-server"])
+    for i in range(5):
+        call(["adb", "connect", "127.0.0.1:21503"])
     client = Client(host='127.0.0.1', port=5037)
     devices = client.devices()
+    return devices
 
-    if len(devices) == 0:
-        call(["adb", "kill-server"])
-        call(["adb", "start-server"])
-        call(["adb", "connect", "127.0.0.1:21503"])
+
+def initialize():
+    global device
+    try:
         client = Client(host='127.0.0.1', port=5037)
         devices = client.devices()
+    except:
+        devices = PanicFix()
+    
+    if len(devices) == 0:
+        devices = PanicFix()
         if len(devices) == 0:
             raise RuntimeError("No devices connected")
 
@@ -59,7 +67,6 @@ def clickReverse(x, y, wait=False, repeat=1):
 # Crop the photo using the language of memu coordinates which is sort of reversed
 def cropReverse(x1, y1, x2, y2, Image: np.ndarray):
     if Image.shape != (1200, 800, 4):
-        message.showerror("Something went wrong while getting pixel!")
         return np.zeros((4,))
 
     if x1 > x2:
